@@ -6,7 +6,7 @@ import config from '../../config/index';
 import { Accordion } from "@szhsin/react-accordion";
 import AccordionItem from "./../../components/Accordian/AccordianItem";
 import { toast } from 'react-toastify';
-import Checkbox from '../../components/Checkboxes/Checkbox';
+import CheckboxP from './../../components/Checkboxes/ChecoboxP';
 
 const Examination: React.FC = () => {
 
@@ -27,6 +27,9 @@ const Examination: React.FC = () => {
 
         axios.post(`${config.SERVER_URL}exam/read`, requestData).then(res => {
             if (res.data.status == 'success') {
+                for (let i = 0; i < res.data.problems.length; i++) {
+                    res.data.problems[i].answer = '';
+                }
                 setProblemList(res.data.problems);
             }
         })
@@ -46,9 +49,36 @@ const Examination: React.FC = () => {
         readQuiz();
     }
 
-    const handleFinish = () => {
+    const handleSubmit = () => {
+        axios.post(`${config.SERVER_URL}exam/save`, problemList).then(res => {
+            if (res.data.status == 'success') {
+                for (let i = 0; i < res.data.problems.length; i++) {
+                    res.data.problems[i].answer = '';
+                }
+                setProblemList(res.data.problems);
+            }
+        })
         setIsStart(false);
     }
+
+    const handleFinish = () => {
+
+
+        setIsStart(false);
+    }
+
+    const handleCheck = (item, answer) => {
+        item.answer = answer;
+        setProblemList(prevList =>
+            prevList.map(problem =>
+                problem._id == item._id ? { ...problem, ...item } : problem
+            )
+        );
+    }
+
+    useEffect(() => {
+        console.log(problemList)
+    }, [problemList])
 
     return (
         <>
@@ -144,7 +174,12 @@ const Examination: React.FC = () => {
                                                                     </div>
                                                                     <div className="flex flex-col gap-5.5 p-6.5">
                                                                         {
-                                                                            item.items.map((text, j) => <Checkbox checked={false} key={j} text={text} />)
+                                                                            item.items.map((text, j) => <CheckboxP
+                                                                                key={j}
+                                                                                setChecked={handleCheck}
+                                                                                text={text}
+                                                                                problem={item}
+                                                                            />)
                                                                         }
                                                                     </div>
                                                                 </div>
@@ -152,6 +187,15 @@ const Examination: React.FC = () => {
                                                         })
                                                     }
                                                 </Accordion>
+                                            </div>
+                                            <div className="flex justify-end gap-4.5">
+                                                <button
+                                                    className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-90 mr-5"
+                                                    type="button"
+                                                    onClick={handleSubmit}
+                                                >
+                                                    Submit Answer
+                                                </button>
                                             </div>
                                         </div>
                                 }
